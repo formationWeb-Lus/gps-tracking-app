@@ -1,66 +1,77 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import axios from 'axios';
 
 export default function HistoryScreen() {
-  const [positions, setPositions] = useState([]);
+  const [historique, setHistorique] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const vehiculeId = 'Toyota'; // à personnaliser si nécessaire
+  const date = '2025-06-28'; // à rendre dynamique plus tard
+
   useEffect(() => {
-    axios.get('https://backend-ojdz.onrender.com/api/positions')
-      .then(response => {
-        const today = new Date().toISOString().split('T')[0];
-        const filtered = response.data.filter(pos =>
-          pos.timestamp.startsWith(today)
-        );
-        setPositions(filtered);
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`https://backend-ojdz.onrender.com/api/historique/${vehiculeId}/${date}`);
+        setHistorique(response.data);
+      } catch (err) {
+        console.error('Erreur lors du chargement de l’historique :', err.message);
+      } finally {
         setLoading(false);
-      })
-      .catch(error => {
-        console.error('Erreur récupération', error);
-        setLoading(false);
-      });
+      }
+    };
+
+    fetchData();
   }, []);
 
-  if (loading) {
-    return <ActivityIndicator size="large" />;
-  }
+  if (loading) return <ActivityIndicator size="large" color="#000" />;
 
-  const coordinates = positions.map(p => ({
-    latitude: p.latitude,
-    longitude: p.longitude
-  }));
+  if (!historique) return <Text>Pas de données pour ce véhicule.</Text>;
 
-  if (coordinates.length === 0) {
-    return <Text style={{ textAlign: 'center', marginTop: 20 }}>Aucune donnée pour aujourd’hui</Text>;
-  }
+  const positions = historique.positions || [];
 
   return (
-    <MapView
-      style={styles.map}
-      initialRegion={{
-        latitude: coordinates[0].latitude,
-        longitude: coordinates[0].longitude,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      }}
-    >
-      {coordinates.map((coord, index) => (
-        <Marker
-          key={index}
-          coordinate={coord}
-          title={`Arrêt ${index + 1}`}
-          description={`Lat: ${coord.latitude}, Long: ${coord.longitude}`}
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>Historique du {historique.date}</Text>
+      <Text style={styles.info}>Véhicule : {historique.vehicule}</Text>
+      <Text style={styles.info}>Distance : {historique.distance_km} km</Text>
+      <Text style={styles.info}>Heure de départ : {historique.start_time}</Text>
+      <Text style={styles.info}>Heure de fin : {historique.end_time}</Text>
+      <Text style={styles.info}>Arrêts : {historique.total_stops}</Text>
+      <Text style={styles.info}>Temps total d'arrêt : {historique.total_stop_time}</Text>
+
+      <MapView
+        style={styles.map}
+        initialRegion={{
+          latitude: positions[0]?.latitude || -4.3,
+          longitude: positions[0]?.longitude || 15.3,
+          latitudeDelta: 0.1,
+          longitudeDelta: 0.1,
+        }}
+      >
+        {positions.map((pos, index) => (
+          <Marker
+            key={index}
+            coordinate={{ latitude: pos.latitude, longitude: pos.longitude }}
+            title={`Stop ${index + 1}`}
+            description={`${pos.quartier || ''}, ${pos.avenue || ''} (${pos.duree || ''})`}
+          />
+        ))}
+
+        <Polyline
+          coordinates={positions.map(p => ({ latitude: p.latitude, longitude: p.longitude }))}
+          strokeColor="red"
+          strokeWidth={3}
         />
-      ))}
-      <Polyline coordinates={coordinates} strokeColor="red" strokeWidth={4} />
-    </MapView>
+      </MapView>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  map: {
-    flex: 1
-  }
+  container: { padding: 15, backgroundColor: '#fff', flex: 1 },
+  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
+  info: { fontSize: 16, marginVertical: 2 },
+  map: { height: 300, marginTop: 20, borderRadius: 10 },
 });
