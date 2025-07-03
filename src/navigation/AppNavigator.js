@@ -1,22 +1,21 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import HomeScreen from '../screens/HomeScreen';
-import VehicleScreen from '../screens/VehicleScreen';
-import HistoryScreen from '../screens/HistoryScreen';
-import { ROUTES } from '../routes'; // ← import des routes
+
+import UserInfoScreen from '../screens/UserInfoScreen';
+import SubscriptionScreen from '../screens/SubscriptionScreen';
+import MainAppNavigator from './MainAppNavigator';
 
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName={ROUTES.HOME}>
-        <Stack.Screen name={ROUTES.HOME} component={HomeScreen} />
-        <Stack.Screen name={ROUTES.VEHICLES} component={VehicleScreen} />
-        <Stack.Screen name={ROUTES.HISTORY} component={HistoryScreen} />
+      <Stack.Navigator initialRouteName="UserInfo" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="UserInfo" component={UserInfoScreen} />
+        <Stack.Screen name="Subscription" component={SubscriptionScreen} />
+        <Stack.Screen name="MainApp" component={MainAppNavigator} />
       </Stack.Navigator>
     </NavigationContainer>
-    
   );
 }

@@ -1,12 +1,18 @@
-import { View, Text, Button } from 'react-native';
-import { ROUTES } from '../routes'; // ← import des routes
+import React from 'react';
+import { View, Text, Button, StyleSheet } from 'react-native';
 
 export default function HomeScreen({ navigation }) {
   return (
-    <View style={{ padding: 20 }}>
-      <Text>Bienvenue dans l'app GPS Tracking</Text>
-      <Button title="Voir véhicules" onPress={() => navigation.navigate(ROUTES.VEHICLES)} />
-      <Button title="Voir historique" onPress={() => navigation.navigate(ROUTES.HISTORY)} />
+    <View style={styles.container}>
+      <Text style={styles.title}>Bienvenue dans l'application GPS Tracking</Text>
+
+      <Button title="Voir position véhicule" onPress={() => navigation.navigate('Vehicle')} color="red" />
+      <Button title="Voir historique" onPress={() => navigation.navigate('History')} color="blue" />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { padding: 20, flex: 1, justifyContent: 'center' },
+  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 30, textAlign: 'center' },
+});
