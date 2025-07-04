@@ -6,6 +6,7 @@ import UserInfoScreen from '../screens/UserInfoScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import SubscriptionScreen from '../screens/SubscriptionScreen';
 import MainAppNavigator from './MainAppNavigator';
+import ThankYouScreen from '../screens/ThankYouScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -17,6 +18,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="Subscription" component={SubscriptionScreen} />
         <Stack.Screen name="MainApp" component={MainAppNavigator} />
+        <Stack.Screen name="ThankYou" component={ThankYouScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -35,6 +35,7 @@ export default function RegisterScreen({ navigation }) {
     }
 
     setLoading(true);
+
     try {
       const response = await fetch('https://gps-database.onrender.com/api/pending', {
         method: 'POST',
@@ -42,17 +43,16 @@ export default function RegisterScreen({ navigation }) {
         body: JSON.stringify({
           firstname: firstName,
           lastname: lastName,
-          phone: phone,
+          phone,
           plan: selectedPlan,
-          vehicleCount: vehicleCount,
+          vehicleCount,
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert('Succès', 'Inscription réussie 🎉');
-        navigation.navigate('UserInfo'); // redirige vers la connexion après inscription
+        navigation.navigate('ThankYou');
       } else {
         Alert.alert('Erreur', data.message || 'Une erreur est survenue');
       }
@@ -66,7 +66,7 @@ export default function RegisterScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.title}>📝 Créer un compte</Text>
 
         <TextInput
@@ -128,7 +128,7 @@ export default function RegisterScreen({ navigation }) {
         )}
 
         <View style={styles.buttonWrapper}>
-          <Button title={loading ? 'Patientez...' : "S’abonner"} onPress={handleRegister} color="red" disabled={loading} />
+          <Button title={loading ? 'Chargement...' : 'S’abonner'} onPress={handleRegister} color="red" disabled={loading} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -141,9 +141,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
   },
   scrollContainer: {
-    paddingTop: 80,    // descend le contenu un peu plus bas
+    paddingTop: 80,
     paddingHorizontal: 20,
-    paddingBottom: 60, // espace en bas pour que ce soit visible
+    paddingBottom: 40,
   },
   title: {
     fontSize: 24,
