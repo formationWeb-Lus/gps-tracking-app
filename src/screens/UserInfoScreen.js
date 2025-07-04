@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert,
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
-import { loginUser } from '../services/api'; // adapte le chemin
+import { loginUser } from '../../services/app';
 
 export default function UserInfoScreen({ navigation }) {
   const [name, setName] = useState('');
@@ -31,7 +37,23 @@ export default function UserInfoScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* ... ton code existant */}
+      <Text style={styles.title}>Connexion</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Nom"
+        value={name}
+        onChangeText={setName}
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Téléphone"
+        value={phone}
+        onChangeText={setPhone}
+        keyboardType="phone-pad"
+      />
+
       <View style={styles.buttonWrapper}>
         <Button
           title={loading ? 'Chargement...' : 'Suivant'}
@@ -47,3 +69,37 @@ export default function UserInfoScreen({ navigation }) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 24,
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    marginBottom: 32,
+    textAlign: 'center',
+    color: '#333',
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    fontSize: 16,
+  },
+  buttonWrapper: {
+    marginTop: 12,
+    marginBottom: 20,
+  },
+  link: {
+    textAlign: 'center',
+    color: 'blue',
+    textDecorationLine: 'underline',
+    fontSize: 16,
+  },
+});
