@@ -11,6 +11,7 @@ import MainAppNavigator from './MainAppNavigator';
 import ThankYouScreen from '../screens/ThankYouScreen';
 import ContactScreen from '../screens/ContactScreen';
 import EnterCodeScreen from '../screens/EnterCodeScreen';
+import HomeScreen from '../screens/HomeScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -30,6 +31,7 @@ export default function AppNavigator() {
         <Stack.Screen name="MainApp" component={MainAppNavigator} />
         <Stack.Screen name="ThankYou" component={ThankYouScreen} />
         <Stack.Screen name="Contact" component={ContactScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} /> 
       </Stack.Navigator>
     </NavigationContainer>
   );
