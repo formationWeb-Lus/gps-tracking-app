@@ -2,12 +2,15 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import WelcomeScreen from '../screens/WelcomeScreen'; // <-- Ajouté ici
+import LiveTrackingScreen from '../screens/LiveTrackingScreen';
+import WelcomeScreen from '../screens/WelcomeScreen';
 import UserInfoScreen from '../screens/UserInfoScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import SubscriptionScreen from '../screens/SubscriptionScreen';
 import MainAppNavigator from './MainAppNavigator';
 import ThankYouScreen from '../screens/ThankYouScreen';
+import ContactScreen from '../screens/ContactScreen';
+import EnterCodeScreen from '../screens/EnterCodeScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -15,15 +18,18 @@ export default function AppNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Welcome" // <- accueil avec WelcomeScreen en premier
+        initialRouteName="LiveTracking" 
         screenOptions={{ headerShown: false }}
       >
-        <Stack.Screen name="Welcome" component={WelcomeScreen} /> {/* Ajouté ici */}
+        <Stack.Screen name="LiveTracking" component={LiveTrackingScreen} />
+        <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="UserInfo" component={UserInfoScreen} />
+        <Stack.Screen name="EnterCode" component={EnterCodeScreen} /> 
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="Subscription" component={SubscriptionScreen} />
         <Stack.Screen name="MainApp" component={MainAppNavigator} />
         <Stack.Screen name="ThankYou" component={ThankYouScreen} />
+        <Stack.Screen name="Contact" component={ContactScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

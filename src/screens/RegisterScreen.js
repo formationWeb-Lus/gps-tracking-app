@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import Footer from '../components/Footer';
 
 export default function RegisterScreen({ navigation }) {
   const [firstName, setFirstName] = useState('');
@@ -38,18 +39,19 @@ export default function RegisterScreen({ navigation }) {
 
     try {
       const response = await fetch('https://gps-database.onrender.com/api/pending', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstname: firstName,
-          lastname: lastName,
-          phone,
-          plan: selectedPlan,
-          vehicleCount,
-        }),
-      });
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+  firstname: firstName,
+  lastname: lastName,
+  phone,
+  plan: selectedPlan,
+  vehicleCount: vehicleCount,
+  }),
+});
 
-      const data = await response.json();
+const data = await response.json();
+console.log('Réponse du serveur ➤', data);
 
       if (response.ok) {
         navigation.navigate('ThankYou');
@@ -128,9 +130,16 @@ export default function RegisterScreen({ navigation }) {
         )}
 
         <View style={styles.buttonWrapper}>
-          <Button title={loading ? 'Chargement...' : 'S’abonner'} onPress={handleRegister} color="red" disabled={loading} />
+          <Button
+            title={loading ? 'Chargement...' : 'S’abonner'}
+            onPress={handleRegister}
+            color="red"
+            disabled={loading}
+          />
         </View>
       </ScrollView>
+
+      <Footer navigation={navigation} />
     </SafeAreaView>
   );
 }
@@ -143,7 +152,7 @@ const styles = StyleSheet.create({
   scrollContainer: {
     paddingTop: 80,
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 60,
   },
   title: {
     fontSize: 24,

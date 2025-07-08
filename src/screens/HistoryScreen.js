@@ -26,6 +26,7 @@ export default function HistoryScreen() {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     fetchData();

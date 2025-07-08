@@ -7,29 +7,36 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
-} from 'react-native';
-import { loginUser } from '../../services/app';
+} from 'react-native';   
+import Footer from '../components/Footer';
 
 export default function UserInfoScreen({ navigation }) {
-  const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!name || !phone) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
+    if (!phone) {
+      Alert.alert('Erreur', 'Veuillez entrer votre numéro de téléphone');
       return;
     }
+
     setLoading(true);
     try {
-      const result = await loginUser(name, phone);
-      if (result.user) {
+      const response = await fetch('https://gps-database.onrender.com/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.user) {
         navigation.navigate('Home', { user: result.user });
       } else {
-        Alert.alert('Erreur', result.message || 'Informations incorrectes');
+        Alert.alert('Erreur', result.message || 'Téléphone non trouvé');
       }
     } catch (err) {
-      Alert.alert('Erreur', 'Problème de connexion au serveur');
+      Alert.alert('Erreur', 'Impossible de contacter le serveur');
     } finally {
       setLoading(false);
     }
@@ -37,46 +44,39 @@ export default function UserInfoScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Connexion</Text>
+      <View style={styles.content}>
+        <Text style={styles.title}>Connexion</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Nom"
-        value={name}
-        onChangeText={setName}
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Téléphone"
-        value={phone}
-        onChangeText={setPhone}
-        keyboardType="phone-pad"
-      />
-
-      <View style={styles.buttonWrapper}>
-        <Button
-          title={loading ? 'Chargement...' : 'Suivant'}
-          onPress={handleLogin}
-          color="red"
-          disabled={loading}
+        <TextInput
+          style={styles.input}
+          placeholder="Téléphone"
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType="phone-pad"
         />
+
+        <View style={styles.buttonWrapper}>
+          <Button
+            title={loading ? 'Connexion...' : 'Se connecter'}
+            onPress={handleLogin}
+            color="red"
+            disabled={loading}
+          />
+        </View>
+
+        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+          <Text style={styles.link}>Créer un compte</Text>
+        </TouchableOpacity>
       </View>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-        <Text style={styles.link}>Créer un compte</Text>
-      </TouchableOpacity>
+      <Footer navigation={navigation} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
+  content: { flex: 1, padding: 24, justifyContent: 'center' },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -92,10 +92,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     fontSize: 16,
   },
-  buttonWrapper: {
-    marginTop: 12,
-    marginBottom: 20,
-  },
+  buttonWrapper: { marginTop: 12, marginBottom: 20 },
   link: {
     textAlign: 'center',
     color: 'blue',
