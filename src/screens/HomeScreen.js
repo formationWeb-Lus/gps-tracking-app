@@ -1,13 +1,23 @@
 import React from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen({ navigation, route }) {
+  const { user } = route.params; // récupérer l'utilisateur connecté
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Bienvenue dans l'application GPS Tracking</Text>
+      <Text style={styles.title}>Bienvenue {user.prenom} dans l'application GPS Tracking</Text>
 
-      <Button title="Voir position véhicule" onPress={() => navigation.navigate('Vehicle')} color="red" />
-      <Button title="Voir historique" onPress={() => navigation.navigate('History')} color="blue" />
+      <Button
+        title="Voir position véhicule"
+        onPress={() => navigation.navigate('Vehicle', { userId: user.id })}
+        color="red"
+      />
+      <Button
+        title="Voir historique"
+        onPress={() => navigation.navigate('History', { userId: user.id })}
+        color="blue"
+      />
     </View>
   );
 }

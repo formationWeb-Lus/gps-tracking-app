@@ -14,18 +14,15 @@ export default function HistoryScreen() {
   const formattedDate = date.toISOString().slice(0, 10);
 
   const fetchData = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`https://backend-ojdz.onrender.com/api/rapport/${vehiculeId}/${formattedDate}`);
-      setHistorique(response.data);
-    } catch (err) {
-      console.error('❌ Erreur chargement :', err.message);
-      setHistorique(null);
-      Alert.alert('Erreur', 'Impossible de récupérer les données.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    const response = await axios.get(`https://backend-ojdz.onrender.com/api/positions?userId=${userId}`);
+    setPositions(response.data || []);
+  } catch (err) {
+    console.error('❌ Erreur lors du chargement :', err.message);
+  } finally {
+    setLoading(false);
+  }
+};
   
 
   useEffect(() => {

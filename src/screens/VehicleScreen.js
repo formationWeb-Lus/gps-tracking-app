@@ -1,16 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Dimensions, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, ActivityIndicator, TouchableOpacity } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import axios from 'axios';
 
-export default function VehicleScreen() {
+export default function VehicleScreen({ route, navigation }) {
+  const { userId } = route.params;
+
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  if (!userId) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 18, color: 'red' }}>
+          ❌ Aucun identifiant utilisateur reçu.
+        </Text>
+      </View>
+    );
+  }
+
   const fetchData = async () => {
     try {
-      const res = await axios.get('https://backend-ojdz.onrender.com/api/positions');
-      setPositions(res.data || []);
+      const response = await axios.get(`https://backend-ojdz.onrender.com/api/positions?userId=${userId}`);
+      setPositions(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error('❌ Erreur lors du chargement :', err.message);
     } finally {
@@ -22,7 +34,7 @@ export default function VehicleScreen() {
     fetchData();
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [userId]);
 
   if (loading || positions.length === 0) {
     return <ActivityIndicator style={{ flex: 1 }} size="large" color="#007bff" />;
@@ -59,10 +71,10 @@ export default function VehicleScreen() {
       </MapView>
 
       <View style={styles.bottomButtons}>
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button} onPress={() => {/* Navigation vers position */}}>
           <Text style={styles.buttonText}>📍 Voir position véhicule</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button} onPress={() => {/* Navigation vers historique */}}>
           <Text style={styles.buttonText}>🕘 Voir historique</Text>
         </TouchableOpacity>
       </View>
