@@ -2,14 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Dimensions, ActivityIndicator, TouchableOpacity } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import axios from 'axios';
-import isEqual from 'lodash.isequal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import jwtDecode from 'jwt-decode';
 
-// À adapter selon ton système d'authentification
+// 🔐 Fonction pour récupérer le token JWT depuis AsyncStorage
 const getToken = async () => {
-  return 'ton_jwt_token_ici'; // Remplace par la vraie récupération (AsyncStorage, contexte, etc.)
+  try {
+    const token = await AsyncStorage.getItem('token');
+    return token;
+  } catch (error) {
+    console.error('Erreur récupération token:', error);
+    return null;
+  }
 };
 
-export default function VehicleScreen({ route, navigation }) {
+export default function VehicleScreen({ navigation }) {
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,18 +36,24 @@ export default function VehicleScreen({ route, navigation }) {
           return;
         }
 
-        const response = await axios.get('https://backend-ojdz.onrender.com/api/positions', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        // 🔍 Extraction du userId depuis le token JWT
+        const decoded = jwtDecode(token);
+        const userId = decoded.id || decoded.userId;
+
+        if (!userId) {
+          setError('❌ Identifiant utilisateur introuvable dans le token.');
+          return;
+        }
+
+        const response = await axios.get(`https://backend-ojdz.onrender.com/api/positions`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
 
-        const data = Array.isArray(response.data) ? response.data : [];
+        const allData = Array.isArray(response.data) ? response.data : [];
+        const filtered = allData.filter(pos => pos.userid === userId || pos.userId === userId);
 
         if (isMounted) {
-          if (!isEqual(positions, data)) {
-            setPositions(data);
-          }
+          setPositions(filtered);
           setLoading(false);
           setError(null);
         }
@@ -61,7 +74,7 @@ export default function VehicleScreen({ route, navigation }) {
       isMounted = false;
       clearInterval(interval);
     };
-  }, [positions]);
+  }, []);
 
   if (loading) {
     return <ActivityIndicator style={{ flex: 1 }} size="large" color="#007bff" />;
@@ -101,7 +114,7 @@ export default function VehicleScreen({ route, navigation }) {
             key={`${pos.latitude}-${pos.longitude}-${index}`}
             coordinate={{ latitude: pos.latitude, longitude: pos.longitude }}
             pinColor="red"
-            title={`🚗 ${pos.vehiculeid || 'Véhicule'}`}
+            title={`🚗 ${pos.vehiculeid || pos.vehiculeId || 'Véhicule'}`}
             description={`Vitesse : ${pos.vitesse} km/h\nQuartier : ${pos.quartier}\nRue : ${pos.rue}`}
           />
         ))}
