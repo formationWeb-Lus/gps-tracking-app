@@ -7,7 +7,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
-} from 'react-native';   
+} from 'react-native';
 import Footer from '../components/Footer';
 
 export default function UserInfoScreen({ navigation }) {
@@ -15,12 +15,13 @@ export default function UserInfoScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!phone) {
-      Alert.alert('Erreur', 'Veuillez entrer votre numéro de téléphone');
+    if (!phone || phone.trim().length < 8) {
+      Alert.alert('Erreur', 'Veuillez entrer un numéro de téléphone valide');
       return;
     }
 
     setLoading(true);
+
     try {
       const response = await fetch('https://gps-database.onrender.com/api/users', {
         method: 'POST',
@@ -30,12 +31,13 @@ export default function UserInfoScreen({ navigation }) {
 
       const result = await response.json();
 
-      if (response.ok && result.user) {
+      if (response.ok && result?.user) {
         navigation.navigate('Home', { user: result.user });
       } else {
-        Alert.alert('Erreur', result.message || 'Téléphone non trouvé');
+        Alert.alert('Erreur', result?.message || 'Numéro introuvable');
       }
     } catch (err) {
+      console.error('Erreur serveur :', err);
       Alert.alert('Erreur', 'Impossible de contacter le serveur');
     } finally {
       setLoading(false);
@@ -53,6 +55,7 @@ export default function UserInfoScreen({ navigation }) {
           value={phone}
           onChangeText={setPhone}
           keyboardType="phone-pad"
+          maxLength={15}
         />
 
         <View style={styles.buttonWrapper}>

@@ -2,42 +2,85 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Dimensions, ActivityIndicator, TouchableOpacity } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import axios from 'axios';
+import isEqual from 'lodash.isequal';
+
+// À adapter selon ton système d'authentification
+const getToken = async () => {
+  return 'ton_jwt_token_ici'; // Remplace par la vraie récupération (AsyncStorage, contexte, etc.)
+};
 
 export default function VehicleScreen({ route, navigation }) {
-  const { userId } = route.params;
-
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  if (!userId) {
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      try {
+        const token = await getToken();
+        if (!token) {
+          if (isMounted) {
+            setError('❌ Utilisateur non authentifié');
+            setPositions([]);
+            setLoading(false);
+          }
+          return;
+        }
+
+        const response = await axios.get('https://backend-ojdz.onrender.com/api/positions', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = Array.isArray(response.data) ? response.data : [];
+
+        if (isMounted) {
+          if (!isEqual(positions, data)) {
+            setPositions(data);
+          }
+          setLoading(false);
+          setError(null);
+        }
+      } catch (err) {
+        console.error('❌ Erreur lors du chargement des positions :', err.message);
+        if (isMounted) {
+          setError('Erreur lors du chargement des positions');
+          setPositions([]);
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 10000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [positions]);
+
+  if (loading) {
+    return <ActivityIndicator style={{ flex: 1 }} size="large" color="#007bff" />;
+  }
+
+  if (error) {
     return (
       <View style={styles.container}>
-        <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 18, color: 'red' }}>
-          ❌ Aucun identifiant utilisateur reçu.
-        </Text>
+        <Text style={styles.errorText}>{error}</Text>
       </View>
     );
   }
 
-  const fetchData = async () => {
-    try {
-      const response = await axios.get(`https://backend-ojdz.onrender.com/api/positions?userId=${userId}`);
-      setPositions(Array.isArray(response.data) ? response.data : []);
-    } catch (err) {
-      console.error('❌ Erreur lors du chargement :', err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
-  }, [userId]);
-
-  if (loading || positions.length === 0) {
-    return <ActivityIndicator style={{ flex: 1 }} size="large" color="#007bff" />;
+  if (positions.length === 0) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>⚠️ Aucune position disponible pour cet utilisateur.</Text>
+      </View>
+    );
   }
 
   const last = positions[positions.length - 1];
@@ -55,26 +98,35 @@ export default function VehicleScreen({ route, navigation }) {
       >
         {positions.map((pos, index) => (
           <Marker
-            key={index}
+            key={`${pos.latitude}-${pos.longitude}-${index}`}
             coordinate={{ latitude: pos.latitude, longitude: pos.longitude }}
             pinColor="red"
-            title={`🚗 ${pos.vehiculeId || 'Véhicule'}`}
+            title={`🚗 ${pos.vehiculeid || 'Véhicule'}`}
             description={`Vitesse : ${pos.vitesse} km/h\nQuartier : ${pos.quartier}\nRue : ${pos.rue}`}
           />
         ))}
 
         <Polyline
-          coordinates={positions.map(p => ({ latitude: p.latitude, longitude: p.longitude }))}
+          coordinates={positions.map(p => ({
+            latitude: p.latitude,
+            longitude: p.longitude,
+          }))}
           strokeColor="#FF0000"
           strokeWidth={3}
         />
       </MapView>
 
       <View style={styles.bottomButtons}>
-        <TouchableOpacity style={styles.button} onPress={() => {/* Navigation vers position */}}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('Vehicle')}
+        >
           <Text style={styles.buttonText}>📍 Voir position véhicule</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={() => {/* Navigation vers historique */}}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('History')}
+        >
           <Text style={styles.buttonText}>🕘 Voir historique</Text>
         </TouchableOpacity>
       </View>
@@ -83,9 +135,7 @@ export default function VehicleScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   map: {
     width: Dimensions.get('window').width,
     height: Dimensions.get('window').height - 140,
@@ -111,5 +161,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '600',
     fontSize: 16,
+  },
+  errorText: {
+    textAlign: 'center',
+    marginTop: 50,
+    fontSize: 18,
+    color: 'red',
   },
 });
