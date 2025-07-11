@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Dimensions, ActivityIndicator, TouchableOpacity
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import jwtDecode from 'jwt-decode';
+import jwtDecode from 'jwt-decode'; // ✅ Import correct
 
 // 🔐 Fonction pour récupérer le token JWT depuis AsyncStorage
 const getToken = async () => {
@@ -36,8 +36,10 @@ export default function VehicleScreen({ navigation }) {
           return;
         }
 
-        // 🔍 Extraction du userId depuis le token JWT
+        // ✅ Décodage correct du token JWT
         const decoded = jwtDecode(token);
+        console.log('🧪 Token décodé:', decoded);
+
         const userId = decoded.id || decoded.userId;
 
         if (!userId) {
@@ -45,7 +47,7 @@ export default function VehicleScreen({ navigation }) {
           return;
         }
 
-        const response = await axios.get(`https://backend-ojdz.onrender.com/api/positions`, {
+        const response = await axios.get(`https://gps-device-server.onrender.com/api/positions`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

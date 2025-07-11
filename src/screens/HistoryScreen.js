@@ -1,36 +1,57 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Button, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  Button,
+  Platform,
+} from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import axios from 'axios';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function HistoryScreen({ route }) {
-  // On récupère userId passé via navigation params
-  const { userId } = route.params;
-
   const [historique, setHistorique] = useState(null);
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
+  const [userId, setUserId] = useState(null);
 
   const formattedDate = date.toISOString().slice(0, 10);
 
-  const fetchData = async () => {
-    if (!userId) {
-      setLoading(false);
-      setHistorique(null);
-      return;
-    }
+  useEffect(() => {
+    const loadUserId = async () => {
+      try {
+        if (route.params?.userId) {
+          setUserId(route.params.userId);
+        } else {
+          const userData = await AsyncStorage.getItem('user');
+          const user = JSON.parse(userData);
+          setUserId(user?.id);
+        }
+      } catch (err) {
+        console.error('Erreur récupération userId:', err);
+        setUserId(null);
+      }
+    };
 
+    loadUserId();
+  }, [route.params]);
+
+  useEffect(() => {
+    if (userId) fetchData();
+  }, [date, userId]);
+
+  const fetchData = async () => {
     setLoading(true);
     try {
-      // Supposons que l'API accepte un paramètre date pour filtrer
       const response = await axios.get(
-        `https://backend-ojdz.onrender.com/api/positions/history`, {
-          params: {
-            userId,
-            date: formattedDate,
-          }
+        `https://backend-ojdz.onrender.com/api/positions/history`,
+        {
+          params: { userId, date: formattedDate },
         }
       );
 
@@ -47,20 +68,19 @@ export default function HistoryScreen({ route }) {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [date, userId]);
-
   const onChange = (event, selectedDate) => {
     setShowPicker(Platform.OS === 'ios');
     if (selectedDate) setDate(selectedDate);
   };
 
-  if (loading) return <ActivityIndicator size="large" color="#000" style={{ flex: 1 }} />;
+  if (loading) return <ActivityIndicator size="large" color="red" style={{ flex: 1 }} />;
 
   return (
     <ScrollView style={styles.container}>
-      <Button title={`📅 Choisir la date (${formattedDate})`} onPress={() => setShowPicker(true)} />
+      <Button
+        title={`📅 Choisir la date (${formattedDate})`}
+        onPress={() => setShowPicker(true)}
+      />
 
       {showPicker && (
         <DateTimePicker
@@ -73,9 +93,7 @@ export default function HistoryScreen({ route }) {
       )}
 
       {!historique ? (
-        <Text style={{ marginTop: 20, textAlign: 'center', fontSize: 16, color: 'red' }}>
-          ❌ Aucune donnée pour cette date.
-        </Text>
+        <Text style={styles.noData}>❌ Aucune donnée pour cette date.</Text>
       ) : (
         <>
           <Text style={styles.title}>🧭 Historique du {historique.date || formattedDate}</Text>
@@ -99,7 +117,10 @@ export default function HistoryScreen({ route }) {
               {historique.positions.map((pos, index) => (
                 <Marker
                   key={index}
-                  coordinate={{ latitude: pos.latitude, longitude: pos.longitude }}
+                  coordinate={{
+                    latitude: pos.latitude,
+                    longitude: pos.longitude,
+                  }}
                   title={`Arrêt ${index + 1}`}
                   description={`${pos.quartier || ''}, ${pos.avenue || ''} (${pos.duree || ''})`}
                   pinColor="blue"
@@ -116,7 +137,7 @@ export default function HistoryScreen({ route }) {
               />
             </MapView>
           ) : (
-            <Text style={{ marginTop: 10, textAlign: 'center' }}>❗Aucune position disponible.</Text>
+            <Text style={styles.noData}>❗Aucune position disponible.</Text>
           )}
         </>
       )}
@@ -129,4 +150,5 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: 'bold', marginVertical: 10, textAlign: 'center' },
   info: { fontSize: 16, marginVertical: 2 },
   map: { height: 300, marginTop: 20, borderRadius: 10 },
+  noData: { marginTop: 20, textAlign: 'center', fontSize: 16, color: 'red' },
 });

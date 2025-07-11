@@ -7,7 +7,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Footer from '../components/Footer';
 
 export default function UserInfoScreen({ navigation }) {
@@ -23,21 +25,31 @@ export default function UserInfoScreen({ navigation }) {
     setLoading(true);
 
     try {
-      const response = await fetch('https://gps-database.onrender.com/api/users', {
+      const response = await fetch('https://gps-device-server.onrender.com/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone }),
       });
 
-      const result = await response.json();
+      const contentType = response.headers.get('Content-Type');
+      const isJson = contentType && contentType.includes('application/json');
 
-      if (response.ok && result?.user) {
+      const result = isJson ? await response.json() : null;
+
+      console.log('✅ Réponse API:', result); // ✅ DEBUG
+
+      if (response.ok && result?.token && result?.user) {
+        // Sauvegarde des données localement
+        await AsyncStorage.setItem('token', result.token);
+        await AsyncStorage.setItem('user', JSON.stringify(result.user));
+
+        console.log('🚀 Navigation vers Home'); // ✅ DEBUG
         navigation.navigate('Home', { user: result.user });
       } else {
-        Alert.alert('Erreur', result?.message || 'Numéro introuvable');
+        Alert.alert('Erreur', result?.message || 'Connexion impossible');
       }
     } catch (err) {
-      console.error('Erreur serveur :', err);
+      console.error('❌ Erreur serveur :', err);
       Alert.alert('Erreur', 'Impossible de contacter le serveur');
     } finally {
       setLoading(false);
@@ -59,12 +71,11 @@ export default function UserInfoScreen({ navigation }) {
         />
 
         <View style={styles.buttonWrapper}>
-          <Button
-            title={loading ? 'Connexion...' : 'Se connecter'}
-            onPress={handleLogin}
-            color="red"
-            disabled={loading}
-          />
+          {loading ? (
+            <ActivityIndicator size="large" color="red" />
+          ) : (
+            <Button title="Se connecter" onPress={handleLogin} color="red" />
+          )}
         </View>
 
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
