@@ -33,18 +33,32 @@ export default function UserInfoScreen({ navigation }) {
 
       const contentType = response.headers.get('Content-Type');
       const isJson = contentType && contentType.includes('application/json');
-
       const result = isJson ? await response.json() : null;
 
-      console.log('✅ Réponse API:', result); // ✅ DEBUG
+      console.log('✅ Réponse API:', result);
 
-      if (response.ok && result?.token && result?.user) {
-        // Sauvegarde des données localement
-        await AsyncStorage.setItem('token', result.token);
-        await AsyncStorage.setItem('user', JSON.stringify(result.user));
+      if (response.ok && result?.user) {
+        const user = result.user;
 
-        console.log('🚀 Navigation vers Home'); // ✅ DEBUG
-        navigation.navigate('Home', { user: result.user });
+        // 🔐 Appel de l'API pour générer un token JWT pour le véhicule
+        const tokenRes = await fetch('https://gps-device-server.onrender.com/api/vehicule-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vehiculeId: user.vehiculeid }),
+        });
+
+        const tokenData = await tokenRes.json();
+
+        if (!tokenRes.ok || !tokenData.token) {
+          throw new Error('Token non généré');
+        }
+
+        // 💾 Sauvegarde du token dans AsyncStorage
+        await AsyncStorage.setItem('vehiculeToken', tokenData.token);
+        console.log('✅ Token JWT sauvegardé');
+
+        // 👣 Redirection vers l'accueil avec les infos de l'utilisateur
+        navigation.navigate('Home', { user });
       } else {
         Alert.alert('Erreur', result?.message || 'Connexion impossible');
       }

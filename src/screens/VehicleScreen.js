@@ -3,18 +3,6 @@ import { View, Text, StyleSheet, Dimensions, ActivityIndicator, TouchableOpacity
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import jwtDecode from 'jwt-decode'; // ✅ Import correct
-
-// 🔐 Fonction pour récupérer le token JWT depuis AsyncStorage
-const getToken = async () => {
-  try {
-    const token = await AsyncStorage.getItem('token');
-    return token;
-  } catch (error) {
-    console.error('Erreur récupération token:', error);
-    return null;
-  }
-};
 
 export default function VehicleScreen({ navigation }) {
   const [positions, setPositions] = useState([]);
@@ -26,43 +14,26 @@ export default function VehicleScreen({ navigation }) {
 
     const fetchData = async () => {
       try {
-        const token = await getToken();
+        const token = await AsyncStorage.getItem('vehiculeToken');
         if (!token) {
-          if (isMounted) {
-            setError('❌ Utilisateur non authentifié');
-            setPositions([]);
-            setLoading(false);
-          }
-          return;
+          throw new Error("Token manquant pour le véhicule");
         }
 
-        // ✅ Décodage correct du token JWT
-        const decoded = jwtDecode(token);
-        console.log('🧪 Token décodé:', decoded);
-
-        const userId = decoded.id || decoded.userId;
-
-        if (!userId) {
-          setError('❌ Identifiant utilisateur introuvable dans le token.');
-          return;
-        }
-
-        const response = await axios.get(`https://gps-device-server.onrender.com/api/positions`, {
+        const response = await axios.get('https://gps-device-server.onrender.com/api/positions', {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         const allData = Array.isArray(response.data) ? response.data : [];
-        const filtered = allData.filter(pos => pos.userid === userId || pos.userId === userId);
 
         if (isMounted) {
-          setPositions(filtered);
+          setPositions(allData);
           setLoading(false);
           setError(null);
         }
       } catch (err) {
         console.error('❌ Erreur lors du chargement des positions :', err.message);
         if (isMounted) {
-          setError('Erreur lors du chargement des positions');
+          setError("Impossible de charger les positions. Vérifie le token ou la connexion réseau.");
           setPositions([]);
           setLoading(false);
         }
@@ -93,7 +64,7 @@ export default function VehicleScreen({ navigation }) {
   if (positions.length === 0) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>⚠️ Aucune position disponible pour cet utilisateur.</Text>
+        <Text style={styles.errorText}>⚠️ Aucune position disponible.</Text>
       </View>
     );
   }

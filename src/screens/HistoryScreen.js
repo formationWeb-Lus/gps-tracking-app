@@ -12,56 +12,61 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import axios from 'axios';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import jwtDecode from 'jwt-decode';
 
-export default function HistoryScreen({ route }) {
+export default function HistoryScreen() {
   const [historique, setHistorique] = useState(null);
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
-  const [userId, setUserId] = useState(null);
+  const [token, setToken] = useState(null);
+  const [vehiculeId, setVehiculeId] = useState(null);
 
   const formattedDate = date.toISOString().slice(0, 10);
 
   useEffect(() => {
-    const loadUserId = async () => {
+    const loadToken = async () => {
       try {
-        if (route.params?.userId) {
-          setUserId(route.params.userId);
+        const storedToken = await AsyncStorage.getItem('vehiculeToken');
+        if (storedToken) {
+          setToken(storedToken);
+          const decoded = jwtDecode(storedToken);
+          setVehiculeId(decoded.vehiculeId);
         } else {
-          const userData = await AsyncStorage.getItem('user');
-          const user = JSON.parse(userData);
-          setUserId(user?.id);
+          console.warn('❌ Aucun token JWT trouvé pour le véhicule');
         }
       } catch (err) {
-        console.error('Erreur récupération userId:', err);
-        setUserId(null);
+        console.error('❌ Erreur lors du chargement du token :', err.message);
       }
     };
 
-    loadUserId();
-  }, [route.params]);
+    loadToken();
+  }, []);
 
   useEffect(() => {
-    if (userId) fetchData();
-  }, [date, userId]);
+    if (token) fetchData();
+  }, [date, token]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `https://backend-ojdz.onrender.com/api/positions/history`,
+        'https://gps-device-server.onrender.com/api/historiques',
         {
-          params: { userId, date: formattedDate },
+          params: { date: formattedDate },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
-      if (response.data && Object.keys(response.data).length > 0) {
+      if (response.data) {
         setHistorique(response.data);
       } else {
         setHistorique(null);
       }
     } catch (err) {
-      console.error('❌ Erreur lors du chargement :', err.message);
+      console.error('❌ Erreur lors du chargement :', err.response?.data || err.message);
       setHistorique(null);
     } finally {
       setLoading(false);
@@ -73,7 +78,9 @@ export default function HistoryScreen({ route }) {
     if (selectedDate) setDate(selectedDate);
   };
 
-  if (loading) return <ActivityIndicator size="large" color="red" style={{ flex: 1 }} />;
+  if (loading) {
+    return <ActivityIndicator size="large" color="red" style={{ flex: 1 }} />;
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -96,15 +103,15 @@ export default function HistoryScreen({ route }) {
         <Text style={styles.noData}>❌ Aucune donnée pour cette date.</Text>
       ) : (
         <>
-          <Text style={styles.title}>🧭 Historique du {historique.date || formattedDate}</Text>
-          <Text style={styles.info}>🚗 Véhicule : {historique.vehicule || 'Non défini'}</Text>
+          <Text style={styles.title}>🧭 Historique du {formattedDate}</Text>
+          <Text style={styles.info}>🚗 Véhicule : {vehiculeId || historique.vehiculeid || 'Non défini'}</Text>
           <Text style={styles.info}>📏 Distance : {historique.distance_km || 0} km</Text>
           <Text style={styles.info}>🕒 Départ : {historique.start_time || '--:--'}</Text>
           <Text style={styles.info}>🕓 Fin : {historique.end_time || '--:--'}</Text>
           <Text style={styles.info}>⛔ Arrêts : {historique.total_stops || 0}</Text>
-          <Text style={styles.info}>⏱ Temps d'arrêt : {historique.total_stop_time || '00:00:00'}</Text>
+          <Text style={styles.info}>⏱ Temps d'arrêt : {historique.total_stop_time || '00:00'}</Text>
 
-          {historique.positions?.length ? (
+          {historique.positions?.length > 0 ? (
             <MapView
               style={styles.map}
               initialRegion={{
@@ -121,8 +128,8 @@ export default function HistoryScreen({ route }) {
                     latitude: pos.latitude,
                     longitude: pos.longitude,
                   }}
-                  title={`Arrêt ${index + 1}`}
-                  description={`${pos.quartier || ''}, ${pos.avenue || ''} (${pos.duree || ''})`}
+                  title={`Point ${index + 1}`}
+                  description={`${pos.quartier || ''}, ${pos.ville || ''}`}
                   pinColor="blue"
                 />
               ))}
@@ -137,7 +144,7 @@ export default function HistoryScreen({ route }) {
               />
             </MapView>
           ) : (
-            <Text style={styles.noData}>❗Aucune position disponible.</Text>
+            <Text style={styles.noData}>⚠️ Aucun point GPS enregistré.</Text>
           )}
         </>
       )}
@@ -146,9 +153,30 @@ export default function HistoryScreen({ route }) {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 15, backgroundColor: '#fff', flex: 1 },
-  title: { fontSize: 20, fontWeight: 'bold', marginVertical: 10, textAlign: 'center' },
-  info: { fontSize: 16, marginVertical: 2 },
-  map: { height: 300, marginTop: 20, borderRadius: 10 },
-  noData: { marginTop: 20, textAlign: 'center', fontSize: 16, color: 'red' },
+  container: {
+    padding: 15,
+    backgroundColor: '#fff',
+    flex: 1,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginVertical: 10,
+    textAlign: 'center',
+  },
+  info: {
+    fontSize: 16,
+    marginVertical: 2,
+  },
+  map: {
+    height: 300,
+    marginTop: 20,
+    borderRadius: 10,
+  },
+  noData: {
+    marginTop: 20,
+    textAlign: 'center',
+    fontSize: 16,
+    color: 'red',
+  },
 });
