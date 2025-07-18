@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "GPS-RDC",
+    "name": "gps-rdc",
     "slug": "gps-rdc",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,34 +13,30 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/icon.png",
+        "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
-      "package": "com.alexandrelusa.gpsrdc",
-      "permissions": ["ACCESS_FINE_LOCATION"]
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "bundler": "metro",
-      "output": "web",
+      "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/icon.png",
+          "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ],
-      "expo-font"
+      ]
     ],
-    "extra": {
-      "eas": {
-        "projectId": "d2bd97a0-7a20-41c0-8397-0706d7e527b9"
-      }
+    "experiments": {
+      "typedRoutes": true
     }
   }
 }

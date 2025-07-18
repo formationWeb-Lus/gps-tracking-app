@@ -13,7 +13,9 @@ import ContactScreen from '../screens/ContactScreen';
 import EnterCodeScreen from '../screens/EnterCodeScreen';
 import HomeScreen from '../screens/HomeScreen';
 import VehicleScreen from '../screens/VehicleScreen';      // ✅ Ajouté
-import HistoryScreen from '../screens/HistoryScreen';      // ✅ Ajouté
+import HistoryScreen from '../screens/HistoryScreen';
+import PositionDetailScreen from '../screens/PositionDetailScreen'; // ajuste le chemin si besoin
+      // ✅ Ajouté
 
 const Stack = createNativeStackNavigator();
 
@@ -35,7 +37,9 @@ export default function AppNavigator() {
         <Stack.Screen name="Contact" component={ContactScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Vehicle" component={VehicleScreen} />        
-        <Stack.Screen name="History" component={HistoryScreen} />        
+        <Stack.Screen name="History" component={HistoryScreen} /> 
+        <Stack.Screen name="PositionDetail" component={PositionDetailScreen} />
+       
       </Stack.Navigator>
     </NavigationContainer>
   );
